@@ -10,3 +10,15 @@ data/
 .idea/
 *.iml
 *.log
+
+gradle-8.5/
+gradle-dist/
+gradle-8.5-bin.zip
+tools/
+
+gradle-8.5/
+gradle-dist/
+gradle-8.5-bin.zip
+tools/
+
+!gradle/wrapper/gradle-wrapper.jar
