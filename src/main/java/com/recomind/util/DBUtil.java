@@ -41,13 +41,14 @@ public class DBUtil {
     private static void bootstrapIfEmpty() {
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
-            // Simple check: look for a known table 'USERS'
-            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='USERS'");
-            boolean empty = true;
-            if (rs.next()) {
-                empty = rs.getInt(1) == 0;
+            boolean needBootstrap = false;
+            try {
+                // Try a simple query on a known table; if it fails, assume DB is empty
+                stmt.executeQuery("SELECT 1 FROM USERS LIMIT 1");
+            } catch (Exception e) {
+                needBootstrap = true;
             }
-            if (empty) {
+            if (needBootstrap) {
                 logger.info("Database appears empty – running schema and seed scripts");
                 runScript(conn, "/schema.sql");
                 runScript(conn, "/seed.sql");
