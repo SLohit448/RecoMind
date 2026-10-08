@@ -30,7 +30,7 @@ INSERT INTO ITEMS (TITLE, CATEGORY_ID, TAGS, DESCRIPTION, PRICE) SELECT
   'Electro Gadget '||X,
   (SELECT ID FROM CATEGORIES WHERE NAME='Electronics'),
   'gadget,tech',
-  'Highâ€‘quality electronic gadget number '||X,
+  'HighÃ¢â‚¬â€˜quality electronic gadget number '||X,
   19.99+MOD(X,5)
 FROM SYSTEM_RANGE(1,10);
 INSERT INTO ITEMS (TITLE, CATEGORY_ID, TAGS, DESCRIPTION, PRICE) SELECT
@@ -71,22 +71,18 @@ FROM SYSTEM_RANGE(1,10);
 
 -- Interactions (600 rows) with varied types and ratings, timestamps spread over last 60 days
 INSERT INTO INTERACTIONS (USER_ID, ITEM_ID, TYPE, RATING, CREATED_AT)
-SELECT
-  MOD(X, 12) + 1,
-  CASE WHEN MOD(X, 5) = 0
-       THEN CAST(FLOOR(RAND() * 60) AS INT) + 1
-       ELSE (MOD(MOD(X, 12) + 1, 3) * 2 + MOD(CAST(FLOOR(X / 12) AS INT), 2)) * 10
-            + CAST(FLOOR(RAND() * 10) AS INT) + 1
-  END,
+SELECT U,
+  CASE WHEN MOD(X, 5) = 0 THEN MOD(X * 7, 60) + 1
+       ELSE (MOD(U, 3) * 2 + MOD(K, 2)) * 10 + MOD((K - MOD(K, 2)) / 2 + U, 10) + 1 END,
   CASE WHEN MOD(X, 10) IN (0, 1, 2) THEN 'VIEW'
        WHEN MOD(X, 10) IN (3, 4) THEN 'CLICK'
        WHEN MOD(X, 10) IN (5, 6) THEN 'LIKE'
        WHEN MOD(X, 10) = 7 THEN 'DISLIKE'
        WHEN MOD(X, 10) = 8 THEN 'RATING'
        ELSE 'PURCHASE' END,
-  CASE WHEN MOD(X, 10) = 8 THEN MOD(CAST(FLOOR(X / 10) AS INT), 5) + 1 END,
+  CASE WHEN MOD(X, 10) = 8 THEN MOD((X - MOD(X, 10)) / 10, 5) + 1 END,
   DATEADD('DAY', -MOD(X * 7, 60), CURRENT_TIMESTAMP)
-FROM SYSTEM_RANGE(1, 600);
+FROM (SELECT X, MOD(X, 12) + 1 AS U, (X - MOD(X, 12)) / 12 AS K FROM SYSTEM_RANGE(1, 600));
 
 -- System settings defaults
 INSERT INTO SYSTEM_SETTINGS (SETTING_KEY, SETTING_VALUE) VALUES ('weight.content', '0.4');

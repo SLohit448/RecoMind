@@ -9,12 +9,14 @@ public class User {
 
     public User() {}
 
-    public User(String email, String passwordHash, boolean active, long roleId) {
+    public User(Long id, String email, String passwordHash, boolean active, long roleId) {
+        this.id = id;
         this.email = email;
         this.passwordHash = passwordHash;
         this.active = active;
         this.roleId = roleId;
     }
+
 
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }

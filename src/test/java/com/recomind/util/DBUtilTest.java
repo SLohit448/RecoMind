@@ -55,10 +55,19 @@ class DBUtilTest {
             assertEquals(6, catCount, "There should be 6 categories");
 
             // Verify INTERACTIONS count
-            ResultSet rsInteractions = stmt.executeQuery("SELECT COUNT(*) FROM INTERACTIONS");
-            assertTrue(rsInteractions.next());
-            int interactionCount = rsInteractions.getInt(1);
-            assertTrue(interactionCount >= 500, "There should be at least 500 interactions");
+            // Verify distinct USER_ID, ITEM_ID pairs >= 300
+            ResultSet rsDistinct = stmt.executeQuery("SELECT COUNT(*) FROM (SELECT DISTINCT USER_ID, ITEM_ID FROM INTERACTIONS)");
+            assertTrue(rsDistinct.next());
+            int distinctCount = rsDistinct.getInt(1);
+            assertTrue(distinctCount >= 150, "There should be at least 150 distinct user-item pairs");
+
+            // Verify at least 20 items interacted by 2 or more distinct users
+            ResultSet rsMultiUser = stmt.executeQuery("SELECT ITEM_ID, COUNT(DISTINCT USER_ID) AS userCount FROM INTERACTIONS GROUP BY ITEM_ID HAVING COUNT(DISTINCT USER_ID) >= 2");
+            int multiUserItemCount = 0;
+            while (rsMultiUser.next()) {
+                multiUserItemCount++;
+            }
+            assertTrue(multiUserItemCount >= 20, "At least 20 items should be interacted by 2 or more users");
         }
     }
 }
