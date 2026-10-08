@@ -50,18 +50,40 @@ const App = {
         }, 3500);
     },
 
-    // Safe API Fetch Wrapper
+    // Fetch CSRF Token from server
+    async getCsrfToken() {
+        try {
+            const res = await this.fetchJson('/api/csrf', { method: 'GET' });
+            if (res.data && res.data.token) {
+                this.csrfToken = res.data.token;
+                localStorage.setItem('recomind_csrf', this.csrfToken);
+                return this.csrfToken;
+            }
+        } catch (err) {
+            console.error('Failed to obtain CSRF token:', err);
+        }
+        return this.csrfToken;
+    },
+
+    // Safe API Fetch Wrapper with credentials and CSRF
     async fetchJson(url, options = {}) {
         const defaultHeaders = {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         };
 
-        if (this.csrfToken && (options.method === 'POST' || options.method === 'PUT' || options.method === 'DELETE')) {
+        const isStateChanging = (options.method === 'POST' || options.method === 'PUT' || options.method === 'DELETE');
+
+        if (isStateChanging && !this.csrfToken && url !== '/api/csrf') {
+            await this.getCsrfToken();
+        }
+
+        if (this.csrfToken && isStateChanging) {
             defaultHeaders['X-CSRF-Token'] = this.csrfToken;
         }
 
         const config = {
+            credentials: 'include',
             ...options,
             headers: {
                 ...defaultHeaders,
@@ -87,9 +109,12 @@ const App = {
                 throw new Error(data.message || `Request failed with status ${resp.status}`);
             }
 
-            // If response returned a new csrfToken, update it
+            // On successful login or registration, the response contains data.csrfToken
             if (data.data && data.data.csrfToken) {
                 this.csrfToken = data.data.csrfToken;
+                localStorage.setItem('recomind_csrf', this.csrfToken);
+            } else if (data.data && data.data.token) {
+                this.csrfToken = data.data.token;
                 localStorage.setItem('recomind_csrf', this.csrfToken);
             }
 
@@ -122,6 +147,7 @@ const App = {
             await this.fetchJson('/api/auth/logout', { method: 'POST' });
         } catch (ignored) {}
         localStorage.removeItem('recomind_csrf');
+        this.csrfToken = '';
         window.location.href = '/login.html';
     },
 

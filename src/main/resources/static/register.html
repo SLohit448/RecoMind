@@ -130,7 +130,10 @@
             }
         }
 
-        loadCategories();
+        document.addEventListener('DOMContentLoaded', () => {
+            App.getCsrfToken();
+            loadCategories();
+        });
     </script>
 </body>
 </html>

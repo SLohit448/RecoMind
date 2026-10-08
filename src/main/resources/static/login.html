@@ -92,6 +92,9 @@
                 btn.innerHTML = 'Sign In';
             }
         }
+        document.addEventListener('DOMContentLoaded', () => {
+            App.getCsrfToken();
+        });
     </script>
 </body>
 </html>
