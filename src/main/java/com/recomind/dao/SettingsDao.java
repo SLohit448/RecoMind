@@ -1,12 +1,12 @@
 package com.recomind.dao;
 
-import com.recomind.model.SystemSettings;
-import java.util.List;
+import java.util.Map;
 
+/** Key/value access to the SYSTEM_SETTINGS table (algorithm weights, N, thresholds...). */
 public interface SettingsDao {
-    void create(SystemSettings settings);
-    SystemSettings findByKey(String key);
-    List<SystemSettings> findAll();
-    void update(SystemSettings settings);
-    void delete(String key);
+    Map<String, String> getAll();
+    String get(String key, String defaultValue);
+    void save(String key, String value);
+    /** Saves all values; joins an open transaction or runs in its own. */
+    void saveAll(Map<String, String> values);
 }
