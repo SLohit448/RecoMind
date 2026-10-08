@@ -30,17 +30,35 @@ class DBUtilTest {
     void tablesAreCreatedAndSeeded() throws Exception {
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
-            // Verify USERS table has rows from seed.sql
+            // Verify USERS count
             ResultSet rsUsers = stmt.executeQuery("SELECT COUNT(*) FROM USERS");
             assertTrue(rsUsers.next());
             int userCount = rsUsers.getInt(1);
-            assertTrue(userCount >= 2, "There should be at least two seeded users");
+            assertTrue(userCount >= 12, "There should be at least 12 seeded users");
 
-            // Verify ITEMS table has rows from seed.sql
+            // Verify admin password hash
+            ResultSet rsAdmin = stmt.executeQuery("SELECT PASSWORD_HASH FROM USERS WHERE EMAIL='admin@recomind.com'");
+            assertTrue(rsAdmin.next());
+            String adminHash = rsAdmin.getString(1);
+            assertTrue(org.mindrot.jbcrypt.BCrypt.checkpw("Admin@123", adminHash), "Admin password should match BCrypt hash");
+
+            // Verify ITEMS count
             ResultSet rsItems = stmt.executeQuery("SELECT COUNT(*) FROM ITEMS");
             assertTrue(rsItems.next());
             int itemCount = rsItems.getInt(1);
-            assertTrue(itemCount >= 2, "There should be at least two seeded items");
+            assertEquals(60, itemCount, "There should be exactly 60 items");
+
+            // Verify CATEGORIES count
+            ResultSet rsCategories = stmt.executeQuery("SELECT COUNT(*) FROM CATEGORIES");
+            assertTrue(rsCategories.next());
+            int catCount = rsCategories.getInt(1);
+            assertEquals(6, catCount, "There should be 6 categories");
+
+            // Verify INTERACTIONS count
+            ResultSet rsInteractions = stmt.executeQuery("SELECT COUNT(*) FROM INTERACTIONS");
+            assertTrue(rsInteractions.next());
+            int interactionCount = rsInteractions.getInt(1);
+            assertTrue(interactionCount >= 500, "There should be at least 500 interactions");
         }
     }
 }

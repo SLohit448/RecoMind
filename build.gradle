@@ -1,7 +1,15 @@
 plugins {
+    id 'java'
     id 'application'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
-    id 'java'
+}
+
+group = 'com.recomind'
+version = '1.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 repositories {
@@ -9,18 +17,20 @@ repositories {
 }
 
 dependencies {
-    // Core dependencies
-    implementation "org.eclipse.jetty:jetty-server:11.0.15"
-    implementation "org.eclipse.jetty:jetty-servlet:11.0.15"
-    implementation "org.eclipse.jetty:jetty-util:11.0.15"
-    implementation "com.zaxxer:HikariCP:5.1.0"
-    runtimeOnly "com.h2database:h2:2.3.232"
-    implementation "ch.qos.logback:logback-classic:1.5.6"
-    implementation "org.slf4j:slf4j-api:2.0.13"
-    implementation "com.google.code.gson:gson:2.11.0"
-    // Test dependencies
+    implementation 'org.slf4j:slf4j-api:2.0.13'
+    implementation 'ch.qos.logback:logback-classic:1.5.6'
+    implementation 'org.eclipse.jetty:jetty-server:11.0.15'
+    implementation 'org.eclipse.jetty:jetty-servlet:11.0.15'
+    implementation 'org.eclipse.jetty:jetty-util:11.0.15'
+    implementation 'com.h2database:h2:2.3.232'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'org.mindrot:jbcrypt:0.4'
+
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation 'org.mockito:mockito-core:5.7.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.7.0'
 }
 
 application {
@@ -29,6 +39,9 @@ application {
 
 tasks.named('test') {
     useJUnitPlatform()
+    testLogging {
+        events "passed", "failed", "skipped"
+    }
 }
 
 shadowJar {

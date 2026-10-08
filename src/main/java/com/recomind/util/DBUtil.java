@@ -12,6 +12,8 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Properties;
 import com.recomind.config.Config;
+import org.h2.tools.RunScript;
+import java.io.InputStreamReader;
 
 public class DBUtil {
     private static final Logger logger = LoggerFactory.getLogger(DBUtil.class);
@@ -67,15 +69,8 @@ public class DBUtil {
                 logger.warn("SQL script {} not found on classpath", resourcePath);
                 return;
             }
-            String sql = new String(is.readAllBytes());
-            try (Statement st = conn.createStatement()) {
-                for (String part : sql.split(";")) {
-                    String trimmed = part.trim();
-                    if (!trimmed.isEmpty()) {
-                        st.execute(trimmed);
-                    }
-                }
-            }
+            // Use H2 RunScript to execute the entire script without manual splitting
+            RunScript.execute(conn, new InputStreamReader(is));
         }
     }
 
