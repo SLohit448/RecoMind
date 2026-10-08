@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile — RecoMind</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="page-header">
+                <div>
+                    <h1 class="page-title">User Profile</h1>
+                    <p class="page-subtitle">Manage your account details and security credentials.</p>
+                </div>
+            </header>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; max-width: 900px;">
+                <!-- Account Info Card -->
+                <div class="card">
+                    <h2 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 1.25rem;">Account Information</h2>
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="width: 56px; height: 56px; border-radius: var(--radius-full); background: linear-gradient(135deg, var(--accent), #a855f7); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold;" id="avatar-initial">
+                            U
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; font-size: 1.1rem;" id="profile-email">Loading...</div>
+                            <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+                                <span class="badge badge-accent" id="profile-role">USER</span>
+                                <span class="badge badge-success">ACTIVE</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem;">User ID</div>
+                        <div style="font-weight: 500;" id="profile-id">—</div>
+                    </div>
+
+                    <div style="margin-top: 1.5rem;">
+                        <button class="btn btn-danger btn-sm" onclick="App.logout()">
+                            🚪 Sign Out of All Sessions
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Change Password Card -->
+                <div class="card">
+                    <h2 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 1.25rem;">Change Password</h2>
+                    <form id="password-form" onsubmit="handleChangePassword(event)">
+                        <div class="form-group">
+                            <label class="form-label" for="oldPassword">Current Password</label>
+                            <input class="form-input" type="password" id="oldPassword" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="newPassword">New Password</label>
+                            <input class="form-input" type="password" id="newPassword" placeholder="Min 8 chars, 1 letter & 1 number" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="confirmPassword">Confirm New Password</label>
+                            <input class="form-input" type="password" id="confirmPassword" required>
+                        </div>
+
+                        <button type="submit" id="pwd-submit-btn" class="btn btn-secondary btn-block">
+                            Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        async function init() {
+            const user = await App.checkAuth();
+            if (!user) return;
+            App.renderSidebar('profile');
+
+            document.getElementById('profile-email').textContent = user.email;
+            document.getElementById('avatar-initial').textContent = user.email.charAt(0).toUpperCase();
+            document.getElementById('profile-role').textContent = user.role;
+            document.getElementById('profile-id').textContent = '#' + user.userId;
+        }
+
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            const oldPassword = document.getElementById('oldPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const btn = document.getElementById('pwd-submit-btn');
+
+            if (newPassword !== confirmPassword) {
+                App.showToast('New passwords do not match', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Updating...';
+
+            try {
+                await App.fetchJson('/api/auth/password', {
+                    method: 'POST',
+                    body: JSON.stringify({ oldPassword, newPassword })
+                });
+
+                App.showToast('Password updated successfully!', 'success');
+                document.getElementById('password-form').reset();
+            } catch (err) {
+                App.showToast(err.message || 'Failed to update password', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Update Password';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

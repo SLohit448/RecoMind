@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Console — RecoMind</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="page-header">
+                <div>
+                    <h1 class="page-title">Admin Console</h1>
+                    <p class="page-subtitle">Real-time system telemetry, user analytics, catalog, and AI algorithm hyperparameter configuration.</p>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="pill-btn active" id="tab-btn-overview" onclick="switchTab('overview')">📊 Overview & Analytics</button>
+                    <button class="pill-btn" id="tab-btn-users" onclick="switchTab('users')">👥 Users</button>
+                    <button class="pill-btn" id="tab-btn-items" onclick="switchTab('items')">📦 Items</button>
+                    <button class="pill-btn" id="tab-btn-settings" onclick="switchTab('settings')">⚙️ AI Model Settings</button>
+                </div>
+            </header>
+
+            <!-- TAB 1: OVERVIEW & ANALYTICS -->
+            <section id="tab-overview">
+                <!-- Stat Cards -->
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <span class="stat-title">Total Users</span>
+                        <span class="stat-value" id="stat-users">—</span>
+                        <span class="stat-sub">Registered accounts</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-title">Catalog Items</span>
+                        <span class="stat-value" id="stat-items">—</span>
+                        <span class="stat-sub">Available across 6 categories</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-title">Total Interactions</span>
+                        <span class="stat-value" id="stat-interactions">—</span>
+                        <span class="stat-sub">Likes, views, clicks, purchases</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-title">Recommendations Generated</span>
+                        <span class="stat-value" id="stat-recos">—</span>
+                        <span class="stat-sub">Curated across all active users</span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                    <!-- Top Categories -->
+                    <div class="card">
+                        <h3 style="font-size: 1.15rem; font-weight: 600; margin-bottom: 1rem;">🔥 Most Active Categories</h3>
+                        <div id="top-categories-bars" class="bar-chart-container">
+                            <div class="skeleton" style="height: 20px;"></div>
+                            <div class="skeleton" style="height: 20px;"></div>
+                            <div class="skeleton" style="height: 20px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Interaction Types Breakdown -->
+                    <div class="card">
+                        <h3 style="font-size: 1.15rem; font-weight: 600; margin-bottom: 1rem;">📈 Interaction Types Breakdown</h3>
+                        <div id="interaction-types-bars" class="bar-chart-container">
+                            <div class="skeleton" style="height: 20px;"></div>
+                            <div class="skeleton" style="height: 20px;"></div>
+                            <div class="skeleton" style="height: 20px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Algorithm Engine Info -->
+                    <div class="card" style="grid-column: 1 / -1;">
+                        <h3 style="font-size: 1.15rem; font-weight: 600; margin-bottom: 0.75rem;">🤖 Active AI Recommender Engine</h3>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;" id="algorithm-info-cards">
+                            <!-- Dynamic algo weight badges -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: USERS -->
+            <section id="tab-users" style="display: none;">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody">
+                            <tr><td colspan="4" style="text-align: center;">Loading users...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 3: ITEMS -->
+            <section id="tab-items" style="display: none;">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Tags</th>
+                            </tr>
+                        </thead>
+                        <tbody id="items-tbody">
+                            <tr><td colspan="5" style="text-align: center;">Loading items...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 4: SETTINGS -->
+            <section id="tab-settings" style="display: none;">
+                <div class="card" style="max-width: 700px;">
+                    <h3 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 1.25rem;">Hybrid Recommendation Weights & Hyperparameters</h3>
+                    <form id="settings-form" onsubmit="saveSettings(event)">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label class="form-label" for="setting-weight-content">Content Weight</label>
+                                <input class="form-input" type="number" step="0.05" min="0" max="1" id="setting-weight-content" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="setting-weight-collab">Collaborative Weight</label>
+                                <input class="form-input" type="number" step="0.05" min="0" max="1" id="setting-weight-collab" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="setting-weight-pop">Popularity Weight</label>
+                                <input class="form-input" type="number" step="0.05" min="0" max="1" id="setting-weight-pop" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="setting-reco-count">Recommendation Count (Top N)</label>
+                                <input class="form-input" type="number" min="1" max="50" id="setting-reco-count" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="setting-sim-thresh">Similarity Threshold</label>
+                                <input class="form-input" type="number" step="0.05" min="0" max="1" id="setting-sim-thresh" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="setting-min-inter">Min Interactions for Collab</label>
+                                <input class="form-input" type="number" min="1" max="50" id="setting-min-inter" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="setting-algo-active">Active Algorithm</label>
+                            <select class="form-select" id="setting-algo-active">
+                                <option value="HYBRID">HYBRID (Content + Collaborative + Popularity)</option>
+                                <option value="CONTENT">CONTENT ONLY</option>
+                                <option value="COLLABORATIVE">COLLABORATIVE ONLY</option>
+                                <option value="POPULARITY">POPULARITY ONLY</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+                            <button type="submit" id="settings-save-btn" class="btn btn-primary">
+                                Save & Retrain Hybrid Model
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        let analyticsData = null;
+
+        async function init() {
+            const user = await App.checkAuth();
+            if (!user) return;
+            if (user.role !== 'ADMIN') {
+                App.showToast('Administrator access required', 'error');
+                window.location.href = '/dashboard.html';
+                return;
+            }
+
+            App.renderSidebar('admin');
+            await loadAnalytics();
+        }
+
+        function switchTab(tabId) {
+            ['overview', 'users', 'items', 'settings'].forEach(t => {
+                document.getElementById(`tab-${t}`).style.display = t === tabId ? 'block' : 'none';
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (btn) {
+                    if (t === tabId) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }
+            });
+
+            if (tabId === 'users') loadUsers();
+            if (tabId === 'items') loadAdminItems();
+            if (tabId === 'settings') loadSettings();
+        }
+
+        async function loadAnalytics() {
+            try {
+                const res = await App.fetchJson('/api/admin/analytics');
+                analyticsData = res.data || {};
+
+                document.getElementById('stat-users').textContent = analyticsData.totalUsers || 0;
+                document.getElementById('stat-items').textContent = analyticsData.totalItems || 0;
+                document.getElementById('stat-interactions').textContent = analyticsData.totalInteractions || 0;
+                document.getElementById('stat-recos').textContent = analyticsData.totalRecommendations || 0;
+
+                // Render Top Categories Bars
+                const catContainer = document.getElementById('top-categories-bars');
+                catContainer.innerHTML = '';
+                const topCats = analyticsData.topCategories || [];
+                const maxCatCount = topCats.length > 0 ? Math.max(...topCats.map(c => c.count)) : 1;
+
+                topCats.forEach(cat => {
+                    const pct = Math.round((cat.count / maxCatCount) * 100);
+                    const row = document.createElement('div');
+                    row.className = 'bar-row';
+                    row.innerHTML = `
+                        <div class="bar-header">
+                            <span style="font-weight: 500;">${App.escapeHtml(cat.category)}</span>
+                            <span>${cat.count} interactions</span>
+                        </div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: ${pct}%;"></div>
+                        </div>
+                    `;
+                    catContainer.appendChild(row);
+                });
+
+                // Render Interaction Types
+                const typeContainer = document.getElementById('interaction-types-bars');
+                typeContainer.innerHTML = '';
+                const types = analyticsData.countByType || {};
+                const maxTypeCount = Object.values(types).length > 0 ? Math.max(...Object.values(types)) : 1;
+
+                Object.entries(types).forEach(([typeName, count]) => {
+                    const pct = Math.round((count / maxTypeCount) * 100);
+                    const row = document.createElement('div');
+                    row.className = 'bar-row';
+                    row.innerHTML = `
+                        <div class="bar-header">
+                            <span style="font-weight: 500;">${App.escapeHtml(typeName)}</span>
+                            <span>${count} events</span>
+                        </div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: ${pct}%; background: linear-gradient(90deg, #3b82f6, #10b981);"></div>
+                        </div>
+                    `;
+                    typeContainer.appendChild(row);
+                });
+
+                // Render Algorithm Info
+                const algoInfo = analyticsData.algorithmUsage || {};
+                const algoContainer = document.getElementById('algorithm-info-cards');
+                algoContainer.innerHTML = `
+                    <div class="stat-card" style="flex: 1; min-width: 160px;">
+                        <span class="stat-title">Strategy</span>
+                        <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent);">${App.escapeHtml(algoInfo.activeAlgorithm || 'HYBRID')}</span>
+                    </div>
+                    <div class="stat-card" style="flex: 1; min-width: 140px;">
+                        <span class="stat-title">Content Weight</span>
+                        <span style="font-weight: 700; font-size: 1.2rem;">${algoInfo.weightContent || 0.4}</span>
+                    </div>
+                    <div class="stat-card" style="flex: 1; min-width: 140px;">
+                        <span class="stat-title">Collab Weight</span>
+                        <span style="font-weight: 700; font-size: 1.2rem;">${algoInfo.weightCollaborative || 0.4}</span>
+                    </div>
+                    <div class="stat-card" style="flex: 1; min-width: 140px;">
+                        <span class="stat-title">Popularity Weight</span>
+                        <span style="font-weight: 700; font-size: 1.2rem;">${algoInfo.weightPopularity || 0.2}</span>
+                    </div>
+                `;
+            } catch (err) {
+                App.showToast('Failed to load admin analytics: ' + err.message, 'error');
+            }
+        }
+
+        async function loadUsers() {
+            const tbody = document.getElementById('users-tbody');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Loading users...</td></tr>';
+            try {
+                const res = await App.fetchJson('/api/admin/users');
+                const users = res.data || [];
+                tbody.innerHTML = '';
+                users.forEach(u => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>#${u.id}</td>
+                        <td><strong>${App.escapeHtml(u.email)}</strong></td>
+                        <td><span class="badge ${u.role === 'ADMIN' ? 'badge-accent' : 'badge-muted'}">${App.escapeHtml(u.role)}</span></td>
+                        <td><span class="badge ${u.active ? 'badge-success' : 'badge-danger'}">${u.active ? 'ACTIVE' : 'INACTIVE'}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="4" style="color: var(--danger); text-align: center;">${App.escapeHtml(err.message)}</td></tr>`;
+            }
+        }
+
+        async function loadAdminItems() {
+            const tbody = document.getElementById('items-tbody');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading items...</td></tr>';
+            try {
+                const res = await App.fetchJson('/api/admin/items');
+                const items = res.data || [];
+                tbody.innerHTML = '';
+                items.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>#${item.id}</td>
+                        <td><strong>${App.escapeHtml(item.title)}</strong></td>
+                        <td><span class="badge badge-muted">${App.escapeHtml(item.categoryName || 'Category')}</span></td>
+                        <td>$${Number(item.price || 0).toFixed(2)}</td>
+                        <td style="color: var(--text-muted); font-size: 0.85rem;">${App.escapeHtml(item.tags || '')}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" style="color: var(--danger); text-align: center;">${App.escapeHtml(err.message)}</td></tr>`;
+            }
+        }
+
+        async function loadSettings() {
+            try {
+                const res = await App.fetchJson('/api/admin/settings');
+                const settings = res.data || {};
+                document.getElementById('setting-weight-content').value = settings['weight.content'] || '0.4';
+                document.getElementById('setting-weight-collab').value = settings['weight.collaborative'] || '0.4';
+                document.getElementById('setting-weight-pop').value = settings['weight.popularity'] || '0.2';
+                document.getElementById('setting-reco-count').value = settings['recommendation.count'] || '10';
+                document.getElementById('setting-sim-thresh').value = settings['similarity.threshold'] || '0.1';
+                document.getElementById('setting-min-inter').value = settings['min.interactions'] || '3';
+                if (settings['algorithm.active']) {
+                    document.getElementById('setting-algo-active').value = settings['algorithm.active'];
+                }
+            } catch (err) {
+                App.showToast('Failed to load settings: ' + err.message, 'error');
+            }
+        }
+
+        async function saveSettings(e) {
+            e.preventDefault();
+            const wContent = parseFloat(document.getElementById('setting-weight-content').value);
+            const wCollab = parseFloat(document.getElementById('setting-weight-collab').value);
+            const wPop = parseFloat(document.getElementById('setting-weight-pop').value);
+
+            if (Math.abs((wContent + wCollab + wPop) - 1.0) > 0.001) {
+                App.showToast('Weights (Content + Collaborative + Popularity) must sum to 1.0', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('settings-save-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Saving & Retraining...';
+
+            const payload = {
+                'weight.content': String(wContent),
+                'weight.collaborative': String(wCollab),
+                'weight.popularity': String(wPop),
+                'recommendation.count': document.getElementById('setting-reco-count').value,
+                'similarity.threshold': document.getElementById('setting-sim-thresh').value,
+                'min.interactions': document.getElementById('setting-min-inter').value,
+                'algorithm.active': document.getElementById('setting-algo-active').value
+            };
+
+            try {
+                await App.fetchJson('/api/admin/settings', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                App.showToast('Settings saved & recommendations recalculated!', 'success');
+                await loadAnalytics();
+            } catch (err) {
+                App.showToast(err.message || 'Failed to save settings', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Save & Retrain Hybrid Model';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

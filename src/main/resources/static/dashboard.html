@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — RecoMind</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="page-header">
+                <div>
+                    <h1 class="page-title" id="greeting">Welcome back</h1>
+                    <p class="page-subtitle">Here are the smart recommendations personalized for your interests.</p>
+                </div>
+                <div>
+                    <button class="btn btn-secondary btn-sm" onclick="loadRecommendations(true)">
+                        <span>🔄 Refresh Feed</span>
+                    </button>
+                </div>
+            </header>
+
+            <section>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2 style="font-size: 1.35rem; font-weight: 600;">Recommended For You</h2>
+                    <span class="badge badge-accent" id="algo-indicator">Hybrid AI Engine</span>
+                </div>
+
+                <div id="recommendations-container" class="grid-cards">
+                    <!-- Skeletons while loading -->
+                    <div class="card" style="height: 240px;"><div class="skeleton" style="height: 100%;"></div></div>
+                    <div class="card" style="height: 240px;"><div class="skeleton" style="height: 100%;"></div></div>
+                    <div class="card" style="height: 240px;"><div class="skeleton" style="height: 100%;"></div></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        let currentUser = null;
+
+        async function init() {
+            currentUser = await App.checkAuth();
+            if (!currentUser) return;
+
+            App.renderSidebar('dashboard');
+
+            // Set greeting based on time of day
+            const hour = new Date().getHours();
+            const timeGreeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+            const name = currentUser.email.split('@')[0];
+            document.getElementById('greeting').textContent = `${timeGreeting}, ${name}!`;
+
+            loadRecommendations();
+        }
+
+        async function loadRecommendations(isManual = false) {
+            const container = document.getElementById('recommendations-container');
+            if (isManual) {
+                container.innerHTML = `
+                    <div class="card" style="height: 240px;"><div class="skeleton" style="height: 100%;"></div></div>
+                    <div class="card" style="height: 240px;"><div class="skeleton" style="height: 100%;"></div></div>
+                    <div class="card" style="height: 240px;"><div class="skeleton" style="height: 100%;"></div></div>
+                `;
+            }
+
+            try {
+                const res = await App.fetchJson('/api/recommendations');
+                const list = res.data || [];
+
+                if (list.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <div class="empty-state-icon">✨</div>
+                            <div class="empty-state-title">No recommendations yet</div>
+                            <p>Interact with items in Discover to help our AI model learn your taste.</p>
+                            <a href="/discover.html" class="btn btn-primary" style="margin-top: 1rem;">Explore Discover</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = '';
+                list.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'item-card';
+
+                    const algoBadgeClass = item.algorithm === 'CONTENT' ? 'badge-info'
+                        : item.algorithm === 'COLLABORATIVE' ? 'badge-success'
+                        : item.algorithm === 'POPULARITY' ? 'badge-warning'
+                        : 'badge-accent';
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="item-card-header">
+                                <span class="badge badge-muted">${App.escapeHtml(item.categoryName || 'Item')}</span>
+                                <span class="badge ${algoBadgeClass}">${App.escapeHtml(item.algorithm || 'Hybrid')}</span>
+                            </div>
+                            <h3 class="item-title">${App.escapeHtml(item.title || 'Recommended Item')}</h3>
+                            <p class="item-desc">${App.escapeHtml(item.description || 'Smart pick curated based on your taste profile.')}</p>
+                            ${item.explanation ? `<div class="item-reason">💡 ${App.escapeHtml(item.explanation)}</div>` : ''}
+                        </div>
+                        <div class="item-footer">
+                            <span class="item-price">$${Number(item.price || 19.99).toFixed(2)}</span>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-secondary btn-sm" onclick="interact(${item.itemId}, 'LIKE', this)">
+                                    ❤️ Like
+                                </button>
+                                <button class="btn btn-primary btn-sm" onclick="interact(${item.itemId}, 'PURCHASE', this)">
+                                    🛒 Buy
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+                if (isManual) {
+                    App.showToast('Recommendations refreshed', 'success');
+                }
+            } catch (err) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">⚠️</div>
+                        <div class="empty-state-title">Failed to load recommendations</div>
+                        <p>${App.escapeHtml(err.message)}</p>
+                        <button class="btn btn-secondary" style="margin-top: 1rem;" onclick="loadRecommendations()">Try Again</button>
+                    </div>
+                `;
+            }
+        }
+
+        async function interact(itemId, type, btnElement) {
+            if (btnElement) {
+                btnElement.disabled = true;
+                btnElement.innerHTML = '...';
+            }
+            try {
+                await App.fetchJson('/api/interactions', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        itemId: itemId,
+                        type: type
+                    })
+                });
+                App.showToast(`Recorded ${type.toLowerCase()}! AI model updated.`, 'success');
+                if (btnElement) {
+                    btnElement.innerHTML = type === 'LIKE' ? '❤️ Liked' : '✓ Bought';
+                    btnElement.classList.add('btn-primary');
+                }
+            } catch (err) {
+                App.showToast(err.message || 'Failed to record interaction', 'error');
+                if (btnElement) {
+                    btnElement.disabled = false;
+                    btnElement.innerHTML = type === 'LIKE' ? '❤️ Like' : '🛒 Buy';
+                }
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

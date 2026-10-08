@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preferences — RecoMind</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="page-header">
+                <div>
+                    <h1 class="page-title">User Preferences</h1>
+                    <p class="page-subtitle">Configure your topic interests to refine the content-based recommendation model.</p>
+                </div>
+            </header>
+
+            <div class="card" style="max-width: 650px;">
+                <form id="preferences-form" onsubmit="savePreferences(event)">
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 1rem; margin-bottom: 0.75rem;">
+                            Favorite Categories / Topics of Interest
+                        </label>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                            Select the categories you are interested in. The recommendation engine weights these higher when finding matching items.
+                        </p>
+                        <div id="category-options" style="display: flex; flex-wrap: wrap; gap: 0.6rem;">
+                            <div class="skeleton" style="height: 36px; width: 100px;"></div>
+                            <div class="skeleton" style="height: 36px; width: 120px;"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+                        <button type="submit" id="save-btn" class="btn btn-primary">
+                            <span>Save Preferences</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        const selectedCategories = new Set();
+
+        async function init() {
+            const user = await App.checkAuth();
+            if (!user) return;
+            App.renderSidebar('preferences');
+
+            await loadPreferences();
+        }
+
+        async function loadPreferences() {
+            try {
+                const [catRes, prefRes] = await Promise.all([
+                    App.fetchJson('/api/categories'),
+                    App.fetchJson('/api/preferences')
+                ]);
+
+                const categories = catRes.data || [];
+                const prefs = prefRes.data || {};
+                const prefCategories = prefs.categories || [];
+
+                selectedCategories.clear();
+                prefCategories.forEach(c => selectedCategories.add(Number(c)));
+
+                const container = document.getElementById('category-options');
+                container.innerHTML = '';
+
+                categories.forEach(cat => {
+                    const pill = document.createElement('button');
+                    pill.type = 'button';
+                    pill.className = `pill-btn ${selectedCategories.has(Number(cat.id)) ? 'active' : ''}`;
+                    pill.textContent = cat.name;
+                    pill.onclick = () => {
+                        const id = Number(cat.id);
+                        if (selectedCategories.has(id)) {
+                            selectedCategories.delete(id);
+                            pill.classList.remove('active');
+                        } else {
+                            selectedCategories.add(id);
+                            pill.classList.add('active');
+                        }
+                    };
+                    container.appendChild(pill);
+                });
+            } catch (err) {
+                App.showToast('Failed to load preferences: ' + err.message, 'error');
+            }
+        }
+
+        async function savePreferences(e) {
+            e.preventDefault();
+            const btn = document.getElementById('save-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+            try {
+                await App.fetchJson('/api/preferences', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        categories: Array.from(selectedCategories)
+                    })
+                });
+
+                App.showToast('Preferences updated and recommendation model refreshed!', 'success');
+            } catch (err) {
+                App.showToast(err.message || 'Failed to save preferences', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Save Preferences';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

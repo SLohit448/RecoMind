@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register — RecoMind</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+    <div class="auth-card" style="max-width: 480px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <a href="#" class="brand">
+                <div class="brand-icon">R</div>
+                <span class="brand-name">RecoMind</span>
+            </a>
+            <button id="theme-toggle" class="theme-toggle-btn" onclick="App.toggleTheme()">🌙</button>
+        </div>
+        <p class="brand-tagline">Create your account to start getting smart recommendations.</p>
+
+        <form id="register-form" onsubmit="handleRegister(event)">
+            <div class="form-group">
+                <label class="form-label" for="email">Email Address</label>
+                <input class="form-input" type="email" id="email" placeholder="name@domain.com" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <div class="password-toggle-wrap">
+                    <input class="form-input" type="password" id="password" placeholder="At least 8 chars, 1 letter & 1 number" required>
+                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('password')">Show</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Select Topics of Interest (Optional)</label>
+                <div id="categories-container" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.35rem;">
+                    <!-- Dynamically populated categories -->
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Loading categories...</span>
+                </div>
+            </div>
+
+            <div id="error-box" style="display: none; color: var(--danger); font-size: 0.85rem; margin-bottom: 1rem; background: var(--danger-bg); padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); border: 1px solid rgba(239, 68, 68, 0.2);"></div>
+
+            <button type="submit" id="submit-btn" class="btn btn-primary btn-block">
+                <span>Create Account</span>
+            </button>
+        </form>
+
+        <div style="margin-top: 1.5rem; text-align: center; font-size: 0.875rem; color: var(--text-secondary);">
+            Already have an account? <a href="/login.html" style="color: var(--accent); text-decoration: none; font-weight: 600;">Sign in</a>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        const selectedCategories = new Set();
+
+        function togglePasswordVisibility(fieldId) {
+            const input = document.getElementById(fieldId);
+            const btn = input.nextElementSibling;
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = 'Hide';
+            } else {
+                input.type = 'password';
+                btn.textContent = 'Show';
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                // Public endpoint
+                const res = await App.fetchJson('/api/categories');
+                const container = document.getElementById('categories-container');
+                container.innerHTML = '';
+                if (res.data && res.data.length > 0) {
+                    res.data.forEach(cat => {
+                        const pill = document.createElement('button');
+                        pill.type = 'button';
+                        pill.className = 'pill-btn';
+                        pill.textContent = cat.name;
+                        pill.onclick = () => {
+                            if (selectedCategories.has(cat.id)) {
+                                selectedCategories.delete(cat.id);
+                                pill.classList.remove('active');
+                            } else {
+                                selectedCategories.add(cat.id);
+                                pill.classList.add('active');
+                            }
+                        };
+                        container.appendChild(pill);
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to load categories', err);
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('submit-btn');
+            const errBox = document.getElementById('error-box');
+
+            errBox.style.display = 'none';
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Creating account...';
+
+            try {
+                const res = await App.fetchJson('/api/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        categories: Array.from(selectedCategories)
+                    })
+                });
+
+                App.showToast('Account created successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = '/dashboard.html';
+                }, 400);
+            } catch (err) {
+                errBox.textContent = err.message || 'Registration failed';
+                errBox.style.display = 'block';
+                App.showToast(err.message || 'Registration failed', 'error');
+                btn.disabled = false;
+                btn.innerHTML = 'Create Account';
+            }
+        }
+
+        loadCategories();
+    </script>
+</body>
+</html>

@@ -6,8 +6,17 @@ import com.recomind.filter.CsrfFilter;
 import com.recomind.filter.RoleAuthorizationFilter;
 import com.recomind.service.AuthService;
 import com.recomind.service.RecommendationService;
+import com.recomind.servlet.AdminAnalyticsServlet;
+import com.recomind.servlet.AdminItemsServlet;
+import com.recomind.servlet.AdminSettingsServlet;
+import com.recomind.servlet.AdminUsersServlet;
 import com.recomind.servlet.AuthServlet;
+import com.recomind.servlet.CategoryServlet;
 import com.recomind.servlet.CsrfServlet;
+import com.recomind.servlet.InteractionServlet;
+import com.recomind.servlet.ItemServlet;
+import com.recomind.servlet.PreferenceServlet;
+import com.recomind.servlet.RecommendationServlet;
 import com.recomind.servlet.RegisterServlet;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServlet;
@@ -45,12 +54,32 @@ public class WebServer {
             handler.addFilter(auth, "/user-dashboard.html", requests);
             handler.addFilter(auth, "/admin-dashboard.html", requests);
             handler.addFilter(role, "/admin-dashboard.html", requests);
+            handler.addFilter(auth, "/dashboard.html", requests);
+            handler.addFilter(auth, "/discover.html", requests);
+            handler.addFilter(auth, "/interactions.html", requests);
+            handler.addFilter(auth, "/preferences.html", requests);
+            handler.addFilter(auth, "/profile.html", requests);
+            handler.addFilter(auth, "/admin.html", requests);
+            handler.addFilter(role, "/admin.html", requests);
 
             AuthService authService = new AuthService();
             add(handler, new CsrfServlet(), "/api/csrf");
             add(handler, new AuthServlet(authService),
                     "/api/auth/login", "/api/auth/logout", "/api/auth/me", "/api/auth/password");
             add(handler, new RegisterServlet(authService), "/api/auth/register");
+
+            // User API servlets
+            add(handler, new RecommendationServlet(reco), "/api/recommendations");
+            add(handler, new InteractionServlet(reco), "/api/interactions");
+            add(handler, new PreferenceServlet(reco), "/api/preferences");
+            add(handler, new ItemServlet(), "/api/items");
+            add(handler, new CategoryServlet(), "/api/categories");
+
+            // Admin API servlets
+            add(handler, new AdminAnalyticsServlet(reco), "/api/admin/analytics");
+            add(handler, new AdminUsersServlet(), "/api/admin/users");
+            add(handler, new AdminItemsServlet(), "/api/admin/items");
+            add(handler, new AdminSettingsServlet(reco), "/api/admin/settings");
 
             var staticUrl = WebServer.class.getClassLoader().getResource("static");
             if (staticUrl == null) {

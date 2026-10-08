@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discover — RecoMind</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="page-header">
+                <div>
+                    <h1 class="page-title">Discover Catalog</h1>
+                    <p class="page-subtitle">Browse items across all categories and interact to train your recommendation feed.</p>
+                </div>
+            </header>
+
+            <!-- Search & Filter Bar -->
+            <div class="filter-bar">
+                <input type="text" id="search-input" class="form-input search-input" placeholder="🔍 Search items by title, description or tag..." oninput="applyFilters()">
+                <select id="sort-select" class="form-select" style="width: auto; min-width: 160px;" onchange="applyFilters()">
+                    <option value="default">Default Order</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="title-asc">Title: A to Z</option>
+                </select>
+            </div>
+
+            <div id="category-pills" class="category-pills">
+                <button class="pill-btn active" onclick="selectCategory(null, this)">All Categories</button>
+            </div>
+
+            <!-- Items Grid -->
+            <div id="items-container" class="grid-cards">
+                <div class="card" style="height: 240px;"><div class="skeleton" style="height: 100%;"></div></div>
+                <div class="card" style="height: 240px;"><div class="skeleton" style="height: 100%;"></div></div>
+                <div class="card" style="height: 240px;"><div class="skeleton" style="height: 100%;"></div></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        let allItems = [];
+        let selectedCategory = null;
+
+        async function init() {
+            const user = await App.checkAuth();
+            if (!user) return;
+            App.renderSidebar('discover');
+
+            await Promise.all([loadCategories(), loadItems()]);
+        }
+
+        async function loadCategories() {
+            try {
+                const res = await App.fetchJson('/api/categories');
+                const container = document.getElementById('category-pills');
+                (res.data || []).forEach(cat => {
+                    const btn = document.createElement('button');
+                    btn.className = 'pill-btn';
+                    btn.textContent = cat.name;
+                    btn.onclick = () => selectCategory(cat.id, btn);
+                    container.appendChild(btn);
+                });
+            } catch (err) {
+                console.error('Failed to load categories', err);
+            }
+        }
+
+        function selectCategory(catId, btnElement) {
+            selectedCategory = catId;
+            document.querySelectorAll('#category-pills .pill-btn').forEach(b => b.classList.remove('active'));
+            if (btnElement) btnElement.classList.add('active');
+            applyFilters();
+        }
+
+        async function loadItems() {
+            try {
+                const res = await App.fetchJson('/api/items');
+                allItems = res.data || [];
+                applyFilters();
+            } catch (err) {
+                document.getElementById('items-container').innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">⚠️</div>
+                        <div class="empty-state-title">Failed to load items</div>
+                        <p>${App.escapeHtml(err.message)}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function applyFilters() {
+            const search = document.getElementById('search-input').value.toLowerCase().trim();
+            const sort = document.getElementById('sort-select').value;
+            const container = document.getElementById('items-container');
+
+            let filtered = allItems.filter(item => {
+                const matchCategory = selectedCategory === null || item.categoryId == selectedCategory;
+                const matchSearch = !search ||
+                    (item.title && item.title.toLowerCase().includes(search)) ||
+                    (item.description && item.description.toLowerCase().includes(search)) ||
+                    (item.tags && item.tags.toLowerCase().includes(search));
+                return matchCategory && matchSearch;
+            });
+
+            if (sort === 'price-asc') filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
+            else if (sort === 'price-desc') filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
+            else if (sort === 'title-asc') filtered.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">🔍</div>
+                        <div class="empty-state-title">No items found</div>
+                        <p>Try adjusting your search query or category filter.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                card.innerHTML = `
+                    <div>
+                        <div class="item-card-header">
+                            <span class="badge badge-muted">${App.escapeHtml(item.categoryName || 'Item')}</span>
+                            ${item.tags ? `<span style="font-size: 0.75rem; color: var(--text-muted);">#${App.escapeHtml(item.tags.split(',')[0])}</span>` : ''}
+                        </div>
+                        <h3 class="item-title">${App.escapeHtml(item.title || 'Item')}</h3>
+                        <p class="item-desc">${App.escapeHtml(item.description || 'Explore this curated catalog item.')}</p>
+                    </div>
+                    <div class="item-footer">
+                        <span class="item-price">$${Number(item.price || 0).toFixed(2)}</span>
+                        <div style="display: flex; gap: 0.4rem;">
+                            <button class="btn btn-secondary btn-sm" title="Click item" onclick="interact(${item.id}, 'CLICK', this)">
+                                👁️ View
+                            </button>
+                            <button class="btn btn-secondary btn-sm" title="Like item" onclick="interact(${item.id}, 'LIKE', this)">
+                                ❤️ Like
+                            </button>
+                            <button class="btn btn-primary btn-sm" title="Buy item" onclick="interact(${item.id}, 'PURCHASE', this)">
+                                🛒 Buy
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function interact(itemId, type, btnElement) {
+            if (btnElement) {
+                btnElement.disabled = true;
+            }
+            try {
+                await App.fetchJson('/api/interactions', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        itemId: itemId,
+                        type: type
+                    })
+                });
+                App.showToast(`Recorded ${type.toLowerCase()}!`, 'success');
+                if (btnElement) {
+                    btnElement.disabled = false;
+                }
+            } catch (err) {
+                App.showToast(err.message || 'Failed to record interaction', 'error');
+                if (btnElement) btnElement.disabled = false;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
