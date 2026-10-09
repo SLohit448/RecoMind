@@ -33,7 +33,8 @@ import org.slf4j.LoggerFactory;
 /** Embedded Jetty: static pages from classpath:/static plus the JSON API servlets and security filters. */
 public class WebServer {
     private static final Logger logger = LoggerFactory.getLogger(WebServer.class);
-    private static final int PORT = 8080;
+    private static final int PORT =
+        Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
     private static Server server;
 
     public static void start(RecommendationService reco) {
