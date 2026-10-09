@@ -29,7 +29,7 @@ work and to tune the algorithm without changing code.
 
 ## Use case diagram
 
-````mermaid
+```mermaid
 flowchart LR
     U([User])
     A([Admin])
@@ -45,11 +45,11 @@ flowchart LR
     UC3 -. updates .-> UC2
     UC4 -. refreshes .-> UC2
     UC5 -. changes .-> UC2
-````
+```
 
 ## Recommendation flowchart
 
-````mermaid
+```mermaid
 flowchart TD
     A[Request recommendations] --> B{User has history or preferences?}
     B -- No --> C[Cold start: popularity only]
@@ -59,4 +59,4 @@ flowchart TD
     E --> F[Remove seen items and apply price filter]
     F --> G[Keep top N in a PriorityQueue]
     G --> H[Return items with score and why text]
-````
+```

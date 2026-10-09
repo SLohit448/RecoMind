@@ -1,6 +1,6 @@
 # Class diagram
 
-````mermaid
+```mermaid
 classDiagram
     class RecommendationStrategy {
         <<interface>>

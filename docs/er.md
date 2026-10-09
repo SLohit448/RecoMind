@@ -1,6 +1,6 @@
 # ER diagram
 
-````mermaid
+```mermaid
 erDiagram
     ROLES ||--o{ USERS : "has"
     USERS ||--o| USER_PREFERENCES : "has"
@@ -63,6 +63,6 @@ erDiagram
         timestamp TIMESTAMP
         clob DETAILS
     }
-````
+```
 
 `SYSTEM_SETTINGS` is a key/value table (algorithm weights, N, threshold, interval) and has no foreign keys.
