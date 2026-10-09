@@ -70,7 +70,7 @@ public class DBUtil {
                 return;
             }
             // Use H2 RunScript to execute the entire script without manual splitting
-            RunScript.execute(conn, new InputStreamReader(is));
+            RunScript.execute(conn, new InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8));
         }
     }
 

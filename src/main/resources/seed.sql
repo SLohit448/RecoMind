@@ -30,7 +30,7 @@ INSERT INTO ITEMS (TITLE, CATEGORY_ID, TAGS, DESCRIPTION, PRICE) SELECT
   'Electro Gadget '||X,
   (SELECT ID FROM CATEGORIES WHERE NAME='Electronics'),
   'gadget,tech',
-  'HighÃ¢â‚¬â€˜quality electronic gadget number '||X,
+  'High-quality electronic gadget number '||X,
   19.99+MOD(X,5)
 FROM SYSTEM_RANGE(1,10);
 INSERT INTO ITEMS (TITLE, CATEGORY_ID, TAGS, DESCRIPTION, PRICE) SELECT
