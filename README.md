@@ -16,7 +16,7 @@ database or application server to install.
         .\gradlew.bat run
 
 3. Open http://localhost:8080 in a browser.
-4.           OR
+           OR
 5. Open https://recomind-ewqg.onrender.com
 
 The database (an H2 file in the `data` folder) is created and filled with demo data on the first start.
