@@ -114,13 +114,7 @@ Pages served from `src/main/resources/static`:
 | Teamwork | Git history with one commit per feature, this README, module ownership table below |
 | Innovation | Explainable recommendations ("Because you liked ..."), admin-tunable hybrid algorithm, cold-start handling, onboarding categories at registration |
 
-## Team and module ownership
 
-| Member | Modules |
-|---|---|
-| (add name) | (for example: database, DAOs, transactions) |
-| (add name) | (for example: recommendation engine) |
-| (add name) | (for example: servlets, security, UI) |
 
 ## Known limitations
 
