@@ -117,7 +117,18 @@ Pages served from `src/main/resources/static`:
 | Teamwork | Git history with one commit per feature, this README, module ownership table below |
 | Innovation | Explainable recommendations ("Because you liked ..."), admin-tunable hybrid algorithm, cold-start handling, onboarding categories at registration |
 
+## Innovation and extra effort
 
+Beyond the minimum requirements (settings management, analytics, personalised recommendations, preferences), RecoMind adds:
+
+- **Explainable recommendations:** every card shows why it was recommended ("Because you liked ...", "Popular in Books") and which algorithm produced it (Content, Collaborative or Popularity).
+- **Admin-tunable hybrid engine:** the admin changes the algorithm weights, the number of results, the similarity threshold and the refresh interval at runtime. Weights must sum to 1.0, and invalid input is rejected.
+- **Cold-start handling:** new users with no history still get recommendations (popularity only), and onboarding categories at registration personalise the first feed.
+- **Time-decayed popularity:** recent activity counts more than old activity (30-day half-life).
+- **Background processing:** a scheduled thread refreshes the recommendation cache, and an async writer stores interactions without slowing the request.
+- **Security beyond the basics:** CSRF tokens, session fixation protection and role-based access to admin pages and APIs.
+- **Transaction safety:** multi-step database changes are atomic, and a test proves the rollback works.
+- **Cloud deployment:** Dockerfile and a live demo on Render.
 
 ## Known limitations
 
