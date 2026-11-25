@@ -126,3 +126,11 @@ Pages served from `src/main/resources/static`:
   content-based and popularity scores.
 - The session cookie is HttpOnly but the SameSite attribute is not set explicitly. The CSRF token protects state-changing calls.
 - H2 is the only database that has been tested.
+
+## Team and module ownership
+
+| Member | Role | Contribution |
+|---|---|---|
+| Shourya Pratap Singh | Team leader | Project planning and repository management, database design (schema, seed data), DAO layer and JDBC transactions, documentation (README, ER and class diagrams) |
+| Nishant Poswal | Member | Recommendation engine (content-based, collaborative filtering, popularity and hybrid), background refresh threads, unit and service tests |
+| Simma Lohit | Member | JSON servlets and APIs, authentication and security (sessions, CSRF, role filters), user and admin dashboards, cloud deployment |
